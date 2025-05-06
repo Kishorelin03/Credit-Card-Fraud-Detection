@@ -1,6 +1,17 @@
 import streamlit as st
 st.set_page_config(page_title="Credit Card Fraud Detection", layout="wide")
 
+# 🔗 Add external links (Kaggle & GitHub)
+st.markdown(
+    """
+    <div style='text-align: right'>
+        🔗 <a href='https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud' target='_blank'>Download Dataset</a> &nbsp;|&nbsp;
+        👨‍💻 <a href='https://github.com/Kishorelin03' target='_blank'>My GitHub</a>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
@@ -28,7 +39,7 @@ if uploaded_file:
         st.subheader("📄 Uploaded Data Preview")
         st.dataframe(data.head())
 
-        # Preprocess if raw Kaggle format
+        # Preprocess raw Kaggle format
         if 'Amount' in data.columns and 'Time' in data.columns:
             st.info("Preprocessing raw Kaggle dataset...")
             scaler = StandardScaler()
@@ -37,7 +48,7 @@ if uploaded_file:
             data.drop(['Amount', 'Time', 'Class'], axis=1, inplace=True, errors='ignore')
             data = data[['scaled_amount', 'scaled_time'] + [col for col in data.columns if col not in ['scaled_amount', 'scaled_time']]]
 
-        # Validate column match
+        # Check for required columns
         if not set(expected_features).issubset(data.columns):
             st.error("❌ Uploaded CSV is missing one or more required columns.")
             missing_cols = list(set(expected_features) - set(data.columns))
@@ -46,7 +57,6 @@ if uploaded_file:
             st.info("✅ Required columns:")
             st.code(", ".join(expected_features), language='text')
         else:
-            # Generate predictions
             st.success("✅ Data is valid. Generating predictions...")
             predictions = model.predict(data[expected_features])
             probs = model.predict_proba(data[expected_features])[:, 1]
@@ -56,19 +66,18 @@ if uploaded_file:
             result['Prediction'] = predictions
             result['Prediction'] = result['Prediction'].map({0: 'Not Fraud', 1: 'Fraud'})
 
-            # Rearranged column order
+            # Reorder for display
             cols = [col for col in result.columns if col not in ['Prediction', 'Fraud Probability']]
             result = result[cols + ['Prediction', 'Fraud Probability']]
 
-            # Fraud count
+            # Fraud summary
             fraud_count = result['Prediction'].value_counts().get('Fraud', 0)
             st.markdown(f"### 🔍 Fraudulent Transactions Detected: `{fraud_count}`")
 
-            # 2×2 Grid of Visualizations
+            # 📊 2×2 Visualization Grid
             st.subheader("📊 Fraud Detection Visualizations")
 
             col1, col2 = st.columns(2)
-
             with col1:
                 st.markdown("#### 🔸 Fraud vs. Non-Fraud (Pie)")
                 fraud_counts = result['Prediction'].value_counts()
@@ -87,7 +96,6 @@ if uploaded_file:
                 st.pyplot(fig2)
 
             col3, col4 = st.columns(2)
-
             with col3:
                 st.markdown("#### 🔍 Top 10 Important Features")
                 importances = pd.Series(model.feature_importances_, index=expected_features)
@@ -105,7 +113,7 @@ if uploaded_file:
                 ax4.set_title("Fraud vs. Not Fraud Count")
                 st.pyplot(fig4)
 
-            # Display table with filters
+            # Display Table
             show_fraud_only = st.checkbox("🔎 Show only Fraud transactions", value=False)
             row_limit = st.selectbox("🔢 How many rows to display?", [10, 50, 100, 'All'])
 
@@ -116,7 +124,7 @@ if uploaded_file:
             st.subheader("📋 Prediction Table")
             st.dataframe(display_df)
 
-            # CSV download
+            # Download predictions
             csv = result.to_csv(index=False).encode('utf-8')
             st.download_button("📥 Download Results as CSV", csv, "fraud_predictions.csv", "text/csv")
 
