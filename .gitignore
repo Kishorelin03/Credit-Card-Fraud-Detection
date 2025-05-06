@@ -1,0 +1,9 @@
+# Ignore large files and unwanted folders
+data/creditcard.csv
+*.pkl
+*.zip
+.ipynb_checkpoints/
+__pycache__/
+venv/
+.DS_Store
+
